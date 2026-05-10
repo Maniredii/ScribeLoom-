@@ -74,10 +74,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs.length === 0) return;
             
+            const tab = tabs[0];
+            // Chrome blocks screenshots on restricted pages
+            if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.includes('chrome.google.com/webstore'))) {
+                console.warn("Skipping screenshot: Cannot capture browser settings or store pages.");
+                return;
+            }
+            
             // Capture visible tab
             chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 80 }, async (dataUrl) => {
                 if (chrome.runtime.lastError) {
-                    console.error("Screenshot error:", chrome.runtime.lastError.message);
+                    console.error("Screenshot error:", JSON.stringify(chrome.runtime.lastError) || chrome.runtime.lastError.message);
                     dataUrl = null;
                 } else if (message.data.rect) {
                     // Smart image crop around the interacted element
@@ -133,11 +140,15 @@ chrome.webNavigation.onCompleted.addListener((details) => {
         chrome.tabs.get(details.tabId, (tab) => {
             if (!tab.active) return;
             
+            if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.includes('chrome.google.com/webstore'))) {
+                return;
+            }
+            
             // Give the page a tiny bit of time to render completely after load
             setTimeout(() => {
                 chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 50 }, (dataUrl) => {
                     if (chrome.runtime.lastError) {
-                        console.error("Screenshot error:", chrome.runtime.lastError.message);
+                        console.error("Screenshot error:", JSON.stringify(chrome.runtime.lastError) || chrome.runtime.lastError.message);
                         dataUrl = null;
                     }
                     
