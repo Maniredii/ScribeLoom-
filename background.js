@@ -77,7 +77,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Capture visible tab
             chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 80 }, async (dataUrl) => {
                 if (chrome.runtime.lastError) {
-                    console.error("Screenshot error:", chrome.runtime.lastError);
+                    console.error("Screenshot error:", chrome.runtime.lastError.message);
                     dataUrl = null;
                 } else if (message.data.rect) {
                     // Smart image crop around the interacted element
@@ -137,7 +137,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
             setTimeout(() => {
                 chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 50 }, (dataUrl) => {
                     if (chrome.runtime.lastError) {
-                        console.error("Screenshot error:", chrome.runtime.lastError);
+                        console.error("Screenshot error:", chrome.runtime.lastError.message);
                         dataUrl = null;
                     }
                     
