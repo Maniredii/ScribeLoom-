@@ -136,6 +136,9 @@ main {
     #exportPdfBtn {
         display: none !important;
     }
+    .step-delete {
+        display: none !important;
+    }
     header {
         padding: 10px 0;
         color: black;

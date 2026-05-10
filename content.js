@@ -1,5 +1,6 @@
 let isRecording = false;
 let isPrivacyMode = false;
+let lastCaptureTime = 0;
 
 // Check initial recording state
 chrome.storage.local.get(['isRecording', 'isPrivacyMode'], (data) => {
@@ -94,6 +95,10 @@ function showHighlight(element) {
 document.addEventListener('click', (e) => {
     if (!isRecording) return;
     
+    const now = Date.now();
+    if (now - lastCaptureTime < 400) return;
+    lastCaptureTime = now;
+    
     // Ignore clicks on non-interactive elements unless it's a structural click
     const target = e.target;
     
@@ -137,6 +142,10 @@ document.addEventListener('click', (e) => {
 document.addEventListener('submit', (e) => {
     if (!isRecording) return;
     
+    const now = Date.now();
+    if (now - lastCaptureTime < 400) return;
+    lastCaptureTime = now;
+    
     const target = e.target;
     
     const rect = target.getBoundingClientRect();
@@ -165,6 +174,10 @@ document.addEventListener('submit', (e) => {
 // Listen for typing in input fields
 document.addEventListener('change', (e) => {
     if (!isRecording) return;
+    
+    const now = Date.now();
+    if (now - lastCaptureTime < 400) return;
+    lastCaptureTime = now;
     
     const target = e.target;
     if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return;
