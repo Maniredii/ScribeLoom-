@@ -123,7 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;">
                                 <strong>Step ${index + 1}: ${step.action}</strong>
-                                <button class="btn danger step-delete" data-index="${index}" style="padding: 2px 6px; font-size: 11px;">🗑️</button>
+                                <div>
+                                    ${index > 0 ? `<button class="btn secondary step-move-up" data-index="${index}" style="padding: 2px 6px; font-size: 11px;">⬆️</button>` : ''}
+                                    ${index < steps.length - 1 ? `<button class="btn secondary step-move-down" data-index="${index}" style="padding: 2px 6px; font-size: 11px;">⬇️</button>` : ''}
+                                    <button class="btn danger step-delete" data-index="${index}" style="padding: 2px 6px; font-size: 11px;">🗑️</button>
+                                </div>
                             </div>
                             <input type="text" class="step-edit" data-index="${index}" value="${step.text || ''}" placeholder="Enter step description...">
                             <span>Target: ${step.targetTag}</span>`;
@@ -159,6 +163,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     const stepsData = data.steps || [];
                     stepsData.splice(idx, 1); // remove 1 item
                     chrome.storage.local.set({ steps: stepsData });
+                });
+            });
+        });
+
+        // Add event listeners for move up buttons
+        document.querySelectorAll('.step-move-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                chrome.storage.local.get(['steps'], (data) => {
+                    const stepsData = data.steps || [];
+                    if (idx > 0) {
+                        const temp = stepsData[idx];
+                        stepsData[idx] = stepsData[idx - 1];
+                        stepsData[idx - 1] = temp;
+                        chrome.storage.local.set({ steps: stepsData });
+                    }
+                });
+            });
+        });
+
+        // Add event listeners for move down buttons
+        document.querySelectorAll('.step-move-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                chrome.storage.local.get(['steps'], (data) => {
+                    const stepsData = data.steps || [];
+                    if (idx < stepsData.length - 1) {
+                        const temp = stepsData[idx];
+                        stepsData[idx] = stepsData[idx + 1];
+                        stepsData[idx + 1] = temp;
+                        chrome.storage.local.set({ steps: stepsData });
+                    }
                 });
             });
         });

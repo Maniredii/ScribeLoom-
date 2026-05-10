@@ -92,3 +92,37 @@ document.addEventListener('submit', (e) => {
         chrome.runtime.sendMessage({ action: 'recordStep', data: stepData });
     }, 300);
 }, true);
+
+// Listen for typing in input fields
+document.addEventListener('change', (e) => {
+    if (!isRecording) return;
+    
+    const target = e.target;
+    if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return;
+    
+    // Ignore passwords for privacy
+    if (target.type === 'password') return;
+
+    let actionType = (target.type === 'checkbox' || target.type === 'radio') ? 'toggled' : 'typed';
+    let val = target.type === 'checkbox' ? (target.checked ? 'checked' : 'unchecked') : target.value;
+    
+    if (actionType === 'typed' && !val.trim()) return; // ignore clearing the input for now
+    
+    if (val.length > 50) val = val.substring(0, 50) + '...';
+
+    const fieldName = target.name || target.id || target.placeholder || target.ariaLabel || 'input field';
+
+    const stepData = {
+        action: 'input',
+        text: `User ${actionType} "${val}" in ${fieldName}`,
+        targetTag: target.tagName.toLowerCase(),
+        id: target.id,
+        className: target.className
+    };
+
+    showHighlight(target);
+
+    setTimeout(() => {
+        chrome.runtime.sendMessage({ action: 'recordStep', data: stepData });
+    }, 300);
+}, true);

@@ -27,5 +27,14 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "toggle_recording": {
+      "suggested_key": {
+        "default": "Alt+Shift+R",
+        "mac": "Command+Shift+R"
+      },
+      "description": "Start or Stop Recording"
+    }
+  }
 }

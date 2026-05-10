@@ -57,6 +57,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
+// Listen for keyboard shortcuts
+chrome.commands.onCommand.addListener((command) => {
+    if (command === 'toggle_recording') {
+        chrome.storage.local.get(['isRecording'], (data) => {
+            const newState = !data.isRecording;
+            chrome.storage.local.set({ isRecording: newState });
+            console.log(`ScribeLoom: Recording ${newState ? 'started' : 'stopped'} via shortcut`);
+            
+            // Notify all tabs
+            chrome.tabs.query({}, (tabs) => {
+                tabs.forEach(tab => {
+                    chrome.tabs.sendMessage(tab.id, { action: 'recordingStatusChanged', isRecording: newState }).catch(() => {});
+                });
+            });
+        });
+    }
+});
+
 // Listen for page navigation
 chrome.webNavigation.onCompleted.addListener((details) => {
     // We only care about the main frame (the whole page, not an iframe)
