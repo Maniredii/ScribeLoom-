@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const meta = document.createElement('div');
             meta.className = 'step-meta';
-            meta.innerText = `Action: ${step.action} | Element: ${step.targetTag} | URL: ${step.url}`;
+            const displayUrl = (step.url && step.url.length > 60) ? step.url.substring(0, 60) + '...' : (step.url || 'unknown');
+            meta.innerText = `Action: ${step.action} | Element: ${step.targetTag} | URL: ${displayUrl}`;
 
             card.appendChild(header);
             card.appendChild(meta);
