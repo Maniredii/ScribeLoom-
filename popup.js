@@ -11,11 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const aiMagicBtn = document.getElementById('aiMagicBtn');
     const aiStatus = document.getElementById('aiStatus');
+    const privacyToggle = document.getElementById('privacyToggle');
 
     // Initialize state
-    chrome.storage.local.get(['isRecording', 'steps'], (data) => {
+    chrome.storage.local.get(['isRecording', 'steps', 'isPrivacyMode'], (data) => {
         const isRecording = data.isRecording || false;
         const steps = data.steps || [];
+        privacyToggle.checked = data.isPrivacyMode || false;
         
         updateUI(isRecording);
         renderSteps(steps);
@@ -48,6 +50,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearBtn.addEventListener('click', () => {
         chrome.storage.local.set({ steps: [] });
+    });
+
+    privacyToggle.addEventListener('change', (e) => {
+        chrome.storage.local.set({ isPrivacyMode: e.target.checked });
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(tab => {
+                chrome.tabs.sendMessage(tab.id, { action: 'privacyStatusChanged', isPrivacyMode: e.target.checked }).catch(() => {});
+            });
+        });
     });
 
     previewBtn.addEventListener('click', () => {

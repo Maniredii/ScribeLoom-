@@ -1,7 +1,49 @@
 // Initialize state on installation
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.storage.local.set({ isRecording: false, steps: [] });
+    chrome.storage.local.set({ isRecording: false, steps: [], isPrivacyMode: false });
 });
+
+// Function to crop image
+async function cropImage(dataUrl, rect, dpr) {
+    if (!rect || !dataUrl) return dataUrl;
+    
+    try {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const bitmap = await createImageBitmap(blob);
+        
+        // The rect is in CSS pixels. The bitmap is in physical pixels.
+        const r = {
+            left: rect.left * dpr,
+            top: rect.top * dpr,
+            width: rect.width * dpr,
+            height: rect.height * dpr
+        };
+        
+        // Add padding around the cropped area
+        const padding = 150 * dpr;
+        
+        let x = Math.max(0, r.left - padding);
+        let y = Math.max(0, r.top - padding);
+        let width = Math.min(bitmap.width - x, r.width + (padding * 2));
+        let height = Math.min(bitmap.height - y, r.height + (padding * 2));
+        
+        const canvas = new OffscreenCanvas(width, height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, x, y, width, height, 0, 0, width, height);
+        
+        const blobCropped = await canvas.convertToBlob({type: "image/jpeg", quality: 0.8});
+        
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blobCropped);
+        });
+    } catch(e) {
+        console.error("Cropping failed:", e);
+        return dataUrl;
+    }
+}
 
 // Listen for messages from popup or content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -33,10 +75,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (tabs.length === 0) return;
             
             // Capture visible tab
-            chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 50 }, (dataUrl) => {
+            chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 80 }, async (dataUrl) => {
                 if (chrome.runtime.lastError) {
                     console.error("Screenshot error:", chrome.runtime.lastError);
                     dataUrl = null;
+                } else if (message.data.rect) {
+                    // Smart image crop around the interacted element
+                    dataUrl = await cropImage(dataUrl, message.data.rect, message.data.devicePixelRatio || 1);
                 }
                 
                 // Save step with screenshot

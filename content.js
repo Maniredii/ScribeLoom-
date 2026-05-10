@@ -1,8 +1,10 @@
 let isRecording = false;
+let isPrivacyMode = false;
 
 // Check initial recording state
-chrome.storage.local.get(['isRecording'], (data) => {
+chrome.storage.local.get(['isRecording', 'isPrivacyMode'], (data) => {
     isRecording = data.isRecording || false;
+    isPrivacyMode = data.isPrivacyMode || false;
 });
 
 // Listen for state changes
@@ -10,6 +12,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'recordingStatusChanged') {
         isRecording = message.isRecording;
         console.log("ScribeLoom Content Script: Recording state changed to", isRecording);
+    } else if (message.action === 'privacyStatusChanged') {
+        isPrivacyMode = message.isPrivacyMode;
     } else if (message.action === 'aiRewrite') {
         (async () => {
             try {
@@ -38,6 +42,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true; // Keep message channel open for async response
     }
 });
+
+function applyPrivacyMask() {
+    if (!document.getElementById('scribeloom-privacy-style')) {
+        const style = document.createElement('style');
+        style.id = 'scribeloom-privacy-style';
+        style.innerText = `
+            .scribeloom-privacy-active input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+            .scribeloom-privacy-active textarea,
+            .scribeloom-privacy-active img {
+                filter: blur(5px) !important;
+                background-color: #e5e7eb !important;
+                color: transparent !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    document.body.classList.add('scribeloom-privacy-active');
+}
+
+function removePrivacyMask() {
+    document.body.classList.remove('scribeloom-privacy-active');
+}
 
 function showHighlight(element) {
     const rect = element.getBoundingClientRect();
@@ -82,21 +108,28 @@ document.addEventListener('click', (e) => {
         }
     }
 
+    const rect = target.getBoundingClientRect();
     const stepData = {
         action: 'click',
         text: text,
         targetTag: target.tagName.toLowerCase(),
         id: target.id,
-        className: target.className
+        className: target.className,
+        rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+        },
+        devicePixelRatio: window.devicePixelRatio
     };
 
-    // Add a visual highlight box to the clicked element
+    if (isPrivacyMode) applyPrivacyMask();
     showHighlight(target);
 
-    // Send to background to capture screenshot and save
-    // Delay slightly to allow the highlight and any visual effects/modals to appear
     setTimeout(() => {
         chrome.runtime.sendMessage({ action: 'recordStep', data: stepData });
+        if (isPrivacyMode) setTimeout(removePrivacyMask, 300);
     }, 300);
 }, true);
 
@@ -106,16 +139,26 @@ document.addEventListener('submit', (e) => {
     
     const target = e.target;
     
+    const rect = target.getBoundingClientRect();
     const stepData = {
         action: 'form_submit',
         text: target.id || target.name || 'Form',
         targetTag: 'form',
         id: target.id,
-        className: target.className
+        className: target.className,
+        rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+        },
+        devicePixelRatio: window.devicePixelRatio
     };
     
+    if (isPrivacyMode) applyPrivacyMask();
     setTimeout(() => {
         chrome.runtime.sendMessage({ action: 'recordStep', data: stepData });
+        if (isPrivacyMode) setTimeout(removePrivacyMask, 300);
     }, 300);
 }, true);
 
@@ -138,17 +181,27 @@ document.addEventListener('change', (e) => {
 
     const fieldName = target.name || target.id || target.placeholder || target.ariaLabel || 'input field';
 
+    const rect = target.getBoundingClientRect();
     const stepData = {
         action: 'input',
         text: `User ${actionType} "${val}" in ${fieldName}`,
         targetTag: target.tagName.toLowerCase(),
         id: target.id,
-        className: target.className
+        className: target.className,
+        rect: {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+        },
+        devicePixelRatio: window.devicePixelRatio
     };
 
+    if (isPrivacyMode) applyPrivacyMask();
     showHighlight(target);
 
     setTimeout(() => {
         chrome.runtime.sendMessage({ action: 'recordStep', data: stepData });
+        if (isPrivacyMode) setTimeout(removePrivacyMask, 300);
     }, 300);
 }, true);

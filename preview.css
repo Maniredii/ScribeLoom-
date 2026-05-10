@@ -89,3 +89,60 @@ main {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     margin-left: 45px;
 }
+
+.btn {
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn.primary {
+    background-color: #ffffff;
+    color: #4f46e5;
+}
+.btn.primary:hover {
+    background-color: #f3f4f6;
+}
+
+[contenteditable="true"] {
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px dashed transparent;
+    transition: border 0.2s;
+    outline: none;
+}
+
+[contenteditable="true"]:hover {
+    border-color: #d1d5db;
+}
+
+[contenteditable="true"]:focus {
+    border-color: #4f46e5;
+    background: #f9fafb;
+}
+
+@media print {
+    body {
+        background-color: white;
+    }
+    .container {
+        box-shadow: none;
+        margin: 0;
+        max-width: 100%;
+    }
+    #exportPdfBtn {
+        display: none !important;
+    }
+    header {
+        padding: 10px 0;
+        color: black;
+        background: white;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .step-card {
+        page-break-inside: avoid;
+    }
+}
