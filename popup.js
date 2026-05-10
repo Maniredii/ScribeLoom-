@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyMdBtn = document.getElementById('copyMdBtn');
     const exportMdBtn = document.getElementById('exportMdBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const aiMagicBtn = document.getElementById('aiMagicBtn');
+    const aiStatus = document.getElementById('aiStatus');
 
     // Initialize state
     chrome.storage.local.get(['isRecording', 'steps'], (data) => {
@@ -50,6 +52,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     previewBtn.addEventListener('click', () => {
         chrome.tabs.create({ url: chrome.runtime.getURL('preview.html') });
+    });
+
+    aiMagicBtn.addEventListener('click', async () => {
+        aiStatus.style.display = 'block';
+        aiStatus.innerText = 'Checking AI availability...';
+
+        try {
+            let session;
+            if (self.ai && self.ai.languageModel) {
+                const capabilities = await self.ai.languageModel.capabilities();
+                if (capabilities.available === "no") {
+                    throw new Error("Chrome AI model not downloaded or available.");
+                }
+                session = await self.ai.languageModel.create({
+                    systemPrompt: "You are a documentation assistant. Rewrite raw user actions into concise, professional human-readable tutorial steps. Only return the final step text, no conversational filler or quotes."
+                });
+            } else if (self.ai && self.ai.createTextSession) {
+                // Fallback for earlier Chrome Canary versions
+                session = await self.ai.createTextSession();
+            } else {
+                throw new Error("Please enable chrome://flags/#prompt-api-for-extension-ui");
+            }
+
+            chrome.storage.local.get(['steps'], async (data) => {
+                const stepsData = data.steps || [];
+                for (let i = 0; i < stepsData.length; i++) {
+                    const step = stepsData[i];
+                    aiStatus.innerText = `Rewriting step ${i + 1} of ${stepsData.length}...`;
+                    const promptText = `Convert this raw event into a short tutorial instruction: Action="${step.action}", TargetElement="${step.targetTag}", RawText="${step.text}". Example: 'Click the Login button'.`;
+                    
+                    try {
+                        const result = await session.prompt(promptText);
+                        // Clean up the output to remove quotes or unnecessary prefixes
+                        stepsData[i].text = result.trim().replace(/^"|"$/g, '').replace(/^(Step \d+: )/i, '');
+                        chrome.storage.local.set({ steps: stepsData });
+                    } catch (e) {
+                        console.error("AI error on step", i, e);
+                    }
+                }
+                aiStatus.innerText = 'Magic complete! ✨';
+                if (session.destroy) session.destroy();
+                setTimeout(() => aiStatus.style.display = 'none', 3000);
+            });
+
+        } catch (error) {
+            console.error(error);
+            aiStatus.innerText = "Error: " + error.message;
+        }
     });
 
     copyMdBtn.addEventListener('click', () => {

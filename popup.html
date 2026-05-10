@@ -22,7 +22,11 @@
     </div>
 
     <div class="actions-container">
-        <h3>Recorded Steps (<span id="stepCount">0</span>)</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="margin: 0;">Recorded Steps (<span id="stepCount">0</span>)</h3>
+            <button id="aiMagicBtn" class="btn primary" style="padding: 4px 8px; font-size: 11px;">✨ AI Magic Rewrite</button>
+        </div>
+        <div id="aiStatus" style="font-size: 11px; color: #4f46e5; margin-bottom: 8px; display: none;"></div>
         <ul id="stepsList"></ul>
     </div>
 

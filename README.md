@@ -47,7 +47,7 @@ Since ScribeLoom is currently in development (MVP), you can install it manually:
 - [x] Export to PDF/Markdown
 
 ### Phase 2 — AI Features (Upcoming)
-- [ ] Auto-generated step descriptions using local AI
+- [x] Auto-generated step descriptions using local AI (Chrome window.ai)
 - [ ] Step summarization
 - [ ] Action naming and intelligent grouping
 - [ ] Automatic tutorial title generation
