@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusEl = document.getElementById('status');
     const stepsList = document.getElementById('stepsList');
     const stepCount = document.getElementById('stepCount');
+    const previewBtn = document.getElementById('previewBtn');
+    const exportMdBtn = document.getElementById('exportMdBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
 
     // Initialize state
@@ -23,7 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateUI(changes.isRecording.newValue);
             }
             if (changes.steps) {
-                renderSteps(changes.steps.newValue);
+                // Only re-render if the number of steps changed to prevent focus loss during typing
+                const oldLen = changes.steps.oldValue ? changes.steps.oldValue.length : 0;
+                const newLen = changes.steps.newValue ? changes.steps.newValue.length : 0;
+                if (oldLen !== newLen) {
+                    renderSteps(changes.steps.newValue);
+                }
             }
         }
     });
@@ -38,6 +45,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearBtn.addEventListener('click', () => {
         chrome.storage.local.set({ steps: [] });
+    });
+
+    previewBtn.addEventListener('click', () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('preview.html') });
+    });
+
+    exportMdBtn.addEventListener('click', () => {
+        chrome.storage.local.get(['steps'], (data) => {
+            const steps = data.steps || [];
+            let md = "# ScribeLoom - Recorded Workflow\n\n";
+            steps.forEach((step, i) => {
+                md += `## Step ${i + 1}: ${step.text || step.action}\n`;
+                md += `**Action:** ${step.action} | **Target:** ${step.targetTag}\n\n`;
+                if (step.screenshot) {
+                    md += `![Step ${i + 1}](${step.screenshot})\n\n`;
+                }
+            });
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            chrome.downloads.download({
+                url: url,
+                filename: 'scribeloom-tutorial.md',
+                saveAs: true
+            });
+        });
     });
 
     exportJsonBtn.addEventListener('click', () => {
@@ -70,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         steps.forEach((step, index) => {
             const li = document.createElement('li');
             li.innerHTML = `<strong>Step ${index + 1}: ${step.action}</strong>
-                            <span>Text: ${step.text || 'N/A'}</span>
+                            <input type="text" class="step-edit" data-index="${index}" value="${step.text || ''}" placeholder="Enter step description...">
                             <span>Target: ${step.targetTag}</span>`;
             if (step.screenshot) {
                 const img = document.createElement('img');
@@ -79,6 +111,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.appendChild(img);
             }
             stepsList.appendChild(li);
+        });
+
+        // Add event listeners to all inputs to save edits to storage
+        document.querySelectorAll('.step-edit').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const idx = parseInt(e.target.getAttribute('data-index'));
+                const newText = e.target.value;
+                chrome.storage.local.get(['steps'], (data) => {
+                    const stepsData = data.steps || [];
+                    if (stepsData[idx]) {
+                        stepsData[idx].text = newText;
+                        chrome.storage.local.set({ steps: stepsData });
+                    }
+                });
+            });
         });
     }
 });

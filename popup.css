@@ -132,3 +132,19 @@ body {
     border: 1px solid #e5e7eb;
     margin-top: 4px;
 }
+
+.step-edit {
+    width: 100%;
+    padding: 6px;
+    margin: 4px 0;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.step-edit:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}

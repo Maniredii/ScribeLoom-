@@ -42,9 +42,9 @@ Since ScribeLoom is currently in development (MVP), you can install it manually:
 - [x] Capture precise screenshots
 - [x] Organize and list steps
 - [x] Export to JSON
-- [ ] Manual step editing in popup
-- [ ] Workflow preview mode
-- [ ] Export to PDF/Markdown
+- [x] Manual step editing in popup
+- [x] Workflow preview mode
+- [x] Export to PDF/Markdown
 
 ### Phase 2 — AI Features (Upcoming)
 - [ ] Auto-generated step descriptions using local AI
