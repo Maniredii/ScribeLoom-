@@ -59,40 +59,64 @@ document.addEventListener('DOMContentLoaded', () => {
         aiStatus.innerText = 'Checking AI availability...';
 
         try {
+            let hasLocalAi = false;
             let session;
+            
+            // 1. Try directly in popup
             if (self.ai && self.ai.languageModel) {
                 const capabilities = await self.ai.languageModel.capabilities();
-                if (capabilities.available === "no") {
-                    throw new Error("Chrome AI model not downloaded or available.");
+                if (capabilities.available !== "no") {
+                    hasLocalAi = true;
+                    session = await self.ai.languageModel.create({
+                        systemPrompt: "You are a documentation assistant. Rewrite raw user actions into concise, professional human-readable tutorial steps. Only return the final step text, no conversational filler or quotes."
+                    });
                 }
-                session = await self.ai.languageModel.create({
-                    systemPrompt: "You are a documentation assistant. Rewrite raw user actions into concise, professional human-readable tutorial steps. Only return the final step text, no conversational filler or quotes."
-                });
-            } else if (self.ai && self.ai.createTextSession) {
-                // Fallback for earlier Chrome Canary versions
-                session = await self.ai.createTextSession();
-            } else {
-                throw new Error("Please enable chrome://flags/#prompt-api-for-extension-ui");
             }
 
             chrome.storage.local.get(['steps'], async (data) => {
                 const stepsData = data.steps || [];
+                if (stepsData.length === 0) {
+                    aiStatus.innerText = 'No steps to rewrite.';
+                    return;
+                }
+
                 for (let i = 0; i < stepsData.length; i++) {
                     const step = stepsData[i];
                     aiStatus.innerText = `Rewriting step ${i + 1} of ${stepsData.length}...`;
                     const promptText = `Convert this raw event into a short tutorial instruction: Action="${step.action}", TargetElement="${step.targetTag}", RawText="${step.text}". Example: 'Click the Login button'.`;
                     
                     try {
-                        const result = await session.prompt(promptText);
-                        // Clean up the output to remove quotes or unnecessary prefixes
-                        stepsData[i].text = result.trim().replace(/^"|"$/g, '').replace(/^(Step \d+: )/i, '');
-                        chrome.storage.local.set({ steps: stepsData });
+                        let resultText = null;
+                        if (hasLocalAi) {
+                            resultText = await session.prompt(promptText);
+                        } else {
+                            // 2. Delegate to the active tab if popup doesn't have permissions
+                            const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+                            if (tabs.length === 0) throw new Error("No active tab to run AI.");
+                            
+                            const response = await new Promise(resolve => {
+                                chrome.tabs.sendMessage(tabs[0].id, { action: 'aiRewrite', promptText: promptText }, resolve);
+                            });
+                            
+                            if (chrome.runtime.lastError || !response || response.error) {
+                                throw new Error(response ? response.error : (chrome.runtime.lastError.message + " - Try refreshing the page."));
+                            }
+                            resultText = response.text;
+                        }
+
+                        if (resultText) {
+                            stepsData[i].text = resultText.trim().replace(/^"|"$/g, '').replace(/^(Step \d+: )/i, '');
+                            chrome.storage.local.set({ steps: stepsData });
+                        }
                     } catch (e) {
                         console.error("AI error on step", i, e);
+                        aiStatus.innerText = "Error: " + e.message;
+                        if (session && session.destroy) session.destroy();
+                        return; // Stop trying if one fails
                     }
                 }
                 aiStatus.innerText = 'Magic complete! ✨';
-                if (session.destroy) session.destroy();
+                if (session && session.destroy) session.destroy();
                 setTimeout(() => aiStatus.style.display = 'none', 3000);
             });
 

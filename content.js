@@ -10,6 +10,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'recordingStatusChanged') {
         isRecording = message.isRecording;
         console.log("ScribeLoom Content Script: Recording state changed to", isRecording);
+    } else if (message.action === 'aiRewrite') {
+        (async () => {
+            try {
+                if (!window.ai || (!window.ai.languageModel && !window.ai.createTextSession)) {
+                    sendResponse({ error: "window.ai not available in tab context. Check chrome://flags." });
+                    return;
+                }
+                
+                let session;
+                if (window.ai.languageModel) {
+                    session = await window.ai.languageModel.create({
+                        systemPrompt: "You rewrite raw UI actions into short, clear, human-readable instructions. Only output the final instruction text without any quotes or extra words."
+                    });
+                } else {
+                    session = await window.ai.createTextSession();
+                }
+
+                const resultText = await session.prompt(message.promptText);
+                if (session.destroy) session.destroy();
+                
+                sendResponse({ success: true, text: resultText });
+            } catch (err) {
+                sendResponse({ error: err.message });
+            }
+        })();
+        return true; // Keep message channel open for async response
     }
 });
 
