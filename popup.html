@@ -28,8 +28,11 @@
 
     <div class="export-controls" style="display: flex; flex-direction: column; gap: 8px;">
         <button id="previewBtn" class="btn primary">Preview Workflow</button>
-        <button id="exportMdBtn" class="btn outline">Export Markdown</button>
-        <button id="exportJsonBtn" class="btn outline">Export JSON</button>
+        <div style="display: flex; gap: 8px;">
+            <button id="copyMdBtn" class="btn outline" style="flex: 1;">Copy to Clipboard</button>
+            <button id="exportMdBtn" class="btn outline" style="flex: 1;">Save .md</button>
+        </div>
+        <button id="exportJsonBtn" class="btn outline">Save JSON</button>
     </div>
 
     <script src="popup.js"></script>
