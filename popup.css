@@ -1,0 +1,134 @@
+body {
+    width: 350px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background-color: #f9fafb;
+    color: #111827;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #4f46e5;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn.primary {
+    background-color: #4f46e5;
+    color: white;
+}
+
+.btn.primary:hover:not(:disabled) {
+    background-color: #4338ca;
+}
+
+.btn.danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn.danger:hover:not(:disabled) {
+    background-color: #dc2626;
+}
+
+.btn.secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn.secondary:hover:not(:disabled) {
+    background-color: #d1d5db;
+}
+
+.btn.outline {
+    background-color: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    width: 100%;
+}
+
+.btn.outline:hover:not(:disabled) {
+    background-color: #f3f4f6;
+}
+
+.status-container {
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+#status {
+    font-weight: bold;
+}
+
+.actions-container {
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    margin-bottom: 16px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.actions-container h3 {
+    margin-top: 0;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+#stepsList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#stepsList li {
+    font-size: 13px;
+    padding: 8px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#stepsList li:last-child {
+    border-bottom: none;
+}
+
+.step-image {
+    max-width: 100%;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    margin-top: 4px;
+}
