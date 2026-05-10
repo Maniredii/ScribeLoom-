@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderPreview(steps) {
+        previewContent.innerHTML = ''; // Clear existing content
 
         if (steps.length === 0) {
             previewContent.innerHTML = '<p style="text-align: center; color: #6b7280;">No steps recorded yet. Start recording to see your workflow here!</p>';
